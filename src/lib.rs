@@ -165,8 +165,8 @@ pub fn arange(start: usize, stop: usize, step: isize) -> Vec<f64> {
 /// # Panics
 ///
 /// The `mean` function does not panic.
-pub fn mean(nums: &[f64]) -> f64 {
-    let sum: f64 = nums.iter().sum();
+pub fn mean<T: Into<f64> + Copy>(nums: &[T]) -> f64 {
+    let sum: f64 = nums.iter().map(|&x| x.into()).sum();
     let mean = sum / (nums.len() as f64);
     mean
 }
@@ -192,7 +192,7 @@ pub fn mean(nums: &[f64]) -> f64 {
 /// # Panics
 ///
 /// The `std_dev` function does not panic.
-pub fn std_dev(nums: &[f64]) -> f64 {
+pub fn std_dev<T: Into<f64> + Copy>(nums: &[T]) -> f64 {
     let var = variance(nums);
     if nums.len() == 0 {
         f64::NAN
@@ -222,12 +222,12 @@ pub fn std_dev(nums: &[f64]) -> f64 {
 /// # Panics
 ///
 /// The `variance` function does not panic.
-pub fn variance(nums: &[f64]) -> f64 {
+pub fn variance<T: Into<f64> + Copy>(nums: &[T]) -> f64 {
     let mean = mean(nums);
     if nums.len() == 0 {
         f64::NAN
     } else {
-        nums.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / ((nums.len() - 1) as f64)
+        nums.iter().map(|&x| (x.into() - mean).powi(2)).sum::<f64>() / ((nums.len() - 1) as f64)
     }
 }
 
