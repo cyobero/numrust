@@ -227,7 +227,7 @@ pub fn variance<T: Into<f64> + Copy>(nums: &[T]) -> f64 {
     if nums.len() == 0 {
         f64::NAN
     } else {
-        nums.iter().map(|&x| (x.into() - mean).powi(2)).sum::<f64>() / ((nums.len() - 1) as f64)
+        nums.iter().map(|&x| (x.into() - mean).powi(2)).sum::<f64>() / (nums.len() as f64)
     }
 }
 
