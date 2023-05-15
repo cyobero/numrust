@@ -1,98 +1,68 @@
-use either::Either;
 use rand::prelude::*;
-use rand_distr::{Binomial, Normal, Uniform, WeightedIndex};
-use std::collections::HashMap;
-
 use rand::Rng;
-/// Selects a random sample from a given population with optional replacement and/or
-/// custom probabilities for each element.
+use rand_distr::{Binomial, Normal, WeightedIndex};
+
+/// Returns a vector of `size` elements randomly chosen from the array `a`.
 ///
 /// # Arguments
 ///
-/// * `a`: The population to sample from.
-/// * `size`: An optional parameter specifying the size of the sample. If `None`, a single
-///   element will be sampled. If `Some(n)`, `n` elements will be sampled.
-/// * `replace`: A boolean indicating whether or not sampling should be done with replacement.
-///   If `true`, elements may be sampled more than once. If `false`, each element may only be
-///   sampled once.
-/// * `p`: An optional slice of floats representing the probabilities of each element being
-///   sampled. The length of this slice must be the same as the length of the population.
-///   If `None`, uniform probabilities will be used.
+/// * `a` - An array of elements to choose from.
+/// * `size` - The number of elements to choose.
+/// * `replace` - If `true`, elements are drawn with replacement. If `false`, elements are drawn without replacement.
+/// * `p` - If `Some`, a slice of probabilities associated with each element in `a`. The length of `p` must be the same as the length of `a`.
 ///
 /// # Returns
 ///
-/// A vector of sampled elements from the population.
+/// A vector of elements randomly chosen from `a`.
+///
+/// # Panics
+///
+/// * If `size` is greater than the length of `a` and `replace` is `false`.
+/// * If `p` is `Some` and the length of `p` is not equal to the length of `a`.
 ///
 /// # Examples
 ///
 /// ```
 /// use numrust::choice;
-/// let population = vec![1, 2, 3, 4, 5];
 ///
-/// // Sample 3 elements without replacement.
-/// let sample = choice(&population, Some(3), false, None);
+/// let colors = ["blue", "green", "red"];
 ///
-/// // Sample a single element with replacement using custom probabilities.
-/// let p = [0.1, 0.1, 0.2, 0.3, 0.3];
-/// let sample = choice(&population, None, true, Some(&p));
+/// // Draw 5 elements with replacement
+/// let choices = choice(&colors, 5, true, None);
+/// assert_eq!(choices.len(), 5);
 /// ```
-///
-/// # Panics
-///
-/// This function will panic if `size` is larger than the length of the population and `replace`
-/// is set to `false`, or if `p` is provided and its length does not match the length of the
-/// population.
-///
-pub fn choice<T: Clone>(a: &[T], size: Option<usize>, replace: bool, p: Option<&[f64]>) -> Vec<T> {
-    let mut rng = rand::thread_rng();
+pub fn choice<T: Clone>(a: &[T], size: usize, replace: bool, p: Option<&[f64]>) -> Vec<T> {
+    if !replace & (size > a.len()) {
+        panic!("`size` cannot be greater than the length of `a` if `replace` is false");
+    }
 
-    let population_size = a.len();
-    let sample_size = size.unwrap_or(1);
-
-    let mut probabilities = HashMap::new();
-    if let Some(p_vals) = p {
-        for (i, &val) in p_vals.iter().enumerate() {
-            probabilities.insert(i, val);
-        }
-    } else {
-        for i in 0..population_size {
-            probabilities.insert(i, 1.0 / population_size as f64);
+    if p.is_some() {
+        if p.unwrap().len() != a.len() {
+            panic!("`a` must be the same length as `p`");
         }
     }
 
-    // Create a distribution to randomly select indices from a population,
-    // using a uniform distribution if 'replace' is true, or a weighted
-    // distribution if 'replace' is false.
-    let distribution: Either<Uniform<usize>, WeightedIndex<f64>> = if replace {
-        Either::Left(Uniform::new(0, population_size))
-    } else {
-        let indices: Vec<usize> = (0..population_size).collect();
-        let weights: Vec<f64> = indices.iter().map(|i| probabilities[i]).collect();
-        Either::Right(WeightedIndex::new(weights).unwrap())
+    let mut rng = rand::thread_rng();
+    let dist = match p {
+        Some(probs) => WeightedIndex::new(probs).unwrap(),
+        None => WeightedIndex::new(vec![1.0 / a.len() as f64; a.len()]).unwrap(),
     };
-
-    let mut sample = Vec::with_capacity(sample_size);
-    for _ in 0..sample_size {
-        let random_index = match &distribution {
-            Either::Left(d) => d.sample(&mut rng),
-            Either::Right(d) => d.sample(&mut rng),
-        };
-        sample.push(a[random_index].clone());
-        if !replace {
-            let p_val = probabilities[&random_index];
-            let remaining_mass = 1.0 - p_val;
-            let remaining_indices: Vec<usize> = probabilities
-                .iter()
-                .filter(|&(i, _)| *i != random_index)
-                .map(|(i, _)| *i)
-                .collect();
-            for index in remaining_indices {
-                probabilities.insert(index, probabilities[&index] / remaining_mass);
+    let mut result = Vec::with_capacity(size);
+    if replace {
+        for _ in 0..size {
+            result.push(a[dist.sample(&mut rng)].clone());
+        }
+    } else {
+        let mut indices = (0..a.len()).collect::<Vec<_>>();
+        for _ in 0..size {
+            let i = dist.sample(&mut rng);
+            result.push(a[indices[i]].clone());
+            if !replace {
+                indices.swap_remove(i);
             }
         }
     }
-
-    sample
+    result
 }
 
 /// Generates samples from a binomial distribution with parameters `n` and `p`.
@@ -463,26 +433,52 @@ mod tests {
     }
 
     #[test]
-    fn test_single_choice() {
+    fn test_choice_uniform() {
         let a = vec![1, 2, 3, 4, 5];
-        let sample = choice(&a, Some(1), true, None);
-        assert_eq!(sample.len(), 1);
-        assert!(a.contains(&sample[0]));
+        let result = choice(&a, 10, true, None);
+        assert_eq!(result.len(), 10);
+        assert!(result.iter().all(|x| a.contains(x)));
     }
 
     #[test]
-    fn test_multiple_choices() {
+    fn test_choice_probabilities() {
         let a = vec![1, 2, 3, 4, 5];
-        let sample = choice(&a, Some(3), true, None);
-        assert_eq!(sample.len(), 3);
-        assert!(sample.iter().all(|x| a.contains(x)));
+        let p = vec![0.1, 0.2, 0.3, 0.2, 0.2];
+        let result = choice(&a, 10, true, Some(&p));
+        assert_eq!(result.len(), 10);
+        assert!(result.iter().all(|x| a.contains(x)));
+
+        let a = vec!["red", "blue", "green"];
+        let sample = choice(&a, 10000, true, Some(&[0.7, 0.2, 0.05]));
+        let mut reds = 0;
+        let mut blues = 0;
+        let mut greens = 0;
+        for color in sample {
+            match color {
+                "red" => reds += 1,
+                "blue" => blues += 1,
+                "green" => greens += 1,
+                _ => (),
+            }
+        }
+        // The counts of each color should be reds > blues > greens.
+        assert!((reds > blues) & (blues > greens));
     }
 
     #[test]
-    fn test_choice_without_replacement() {
+    #[should_panic(
+        expected = "`size` cannot be greater than the length of `a` if `replace` is false"
+    )]
+    fn test_choice_size_mismatch() {
         let a = vec![1, 2, 3, 4, 5];
-        let sample = choice(&a, Some(3), false, None);
-        assert_eq!(sample.len(), 3);
-        assert!(sample.iter().all(|x| a.contains(x)));
+        choice(&a, 10, false, None);
+    }
+
+    #[test]
+    #[should_panic(expected = "`a` must be the same length as `p`")]
+    fn test_choice_probabilities_length_mismatch() {
+        let a = vec![1, 2, 3, 4, 5];
+        let p = vec![0.1, 0.2, 0.3, 0.2];
+        choice(&a, 10, true, Some(&p));
     }
 }
