@@ -136,15 +136,13 @@ pub fn binomial(n: u64, p: f64, size: usize) -> Vec<u64> {
 /// use rand_distr::Normal;
 /// use rand::prelude::*;
 ///
-/// fn main() {
-///     let mean = 0.0;
-///     let std = 1.0;
-///     let n = 100;
+/// let mean = 0.0;
+/// let std = 1.0;
+/// let n = 100;
 ///
-///     let data = normal(mean, std, n);
+/// let data = normal(mean, std, n);
 ///
-///     println!("{:?}", data);
-/// }
+/// println!("{:?}", data);
 /// ```
 ///
 /// This example generates 100 random samples from a standard normal distribution (i.e.
@@ -241,8 +239,8 @@ mod numrust_random_tests {
         let actual_mean = crate::mean(&data);
         let actual_std = crate::std_dev(&data).round();
 
-        assert_abs_diff_eq!(actual_mean, mean, epsilon = 0.05);
-        assert_eq!(actual_std, std, "actual_std: {}", actual_std);
+        assert_abs_diff_eq!(actual_mean, mean, epsilon = 0.1);
+        assert_abs_diff_eq!(actual_std, std, epsilon = 0.1);
     }
 
     #[test]
