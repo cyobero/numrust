@@ -1,6 +1,8 @@
+use numrust::mean;
 use numrust::random::*;
 
 fn main() {
+    let v = normal(5.0, 1.5, 1000);
     let colors = vec!["red", "blue", "green"];
     let p = vec![0.7, 0.2, 0.1];
 

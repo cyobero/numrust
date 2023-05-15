@@ -238,12 +238,10 @@ mod numrust_random_tests {
 
         let data = normal(mean, std, n);
 
-        let actual_mean = data.iter().sum::<f64>() / n as f64;
-        let actual_std = ((data.iter().map(|x| (x - actual_mean).powi(2)).sum::<f64>() / n as f64)
-            .sqrt())
-        .round();
+        let actual_mean = crate::mean(&data);
+        let actual_std = crate::std_dev(&data).round();
 
-        assert_abs_diff_eq!(actual_mean, mean, epsilon = 0.1);
+        assert_abs_diff_eq!(actual_mean, mean, epsilon = 0.05);
         assert_eq!(actual_std, std, "actual_std: {}", actual_std);
     }
 
@@ -276,21 +274,18 @@ mod numrust_random_tests {
         let p = 0.7;
         let size = 10000;
 
-        let data = binomial(n, p, size);
-
-        let actual_mean = data.iter().sum::<u64>() as f64 / size as f64;
-        let actual_std = ((data
+        let data = binomial(n, p, size)
             .iter()
-            .map(|&x| (x as f64 - actual_mean).powi(2))
-            .sum::<f64>()
-            / size as f64)
-            .sqrt())
-        .round();
+            .map(|&x| x as f64)
+            .collect::<Vec<f64>>();
+
+        let actual_mean = crate::mean(&data);
+        let actual_std = crate::std_dev(&data).round();
 
         let expected_mean = n as f64 * p;
         let expected_std = ((n as f64 * p * (1.0 - p)).sqrt()).round();
 
-        assert_abs_diff_eq!(actual_mean, expected_mean, epsilon = 0.1);
+        assert_abs_diff_eq!(actual_mean, expected_mean, epsilon = 0.05);
         assert_eq!(actual_std, expected_std, "actual_std: {}", actual_std);
     }
 
