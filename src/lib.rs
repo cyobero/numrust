@@ -307,6 +307,8 @@ mod numrust_tests {
 
         let expected_result = vec![5.0, 10.0, 15.0];
         assert_eq!(arange(start, stop, step), expected_result);
+
+        assert_eq!(arange(1, 6, 1), vec![1., 2., 3., 4., 5.]);
     }
 
     #[test]
