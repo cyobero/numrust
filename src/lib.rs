@@ -1,5 +1,72 @@
 pub mod random;
 
+pub fn corrcoef(x: &[f64], y: &[f64]) -> Vec<Vec<f64>> {
+    if x.len() != y.len() {
+        panic!("x and y must have the same length");
+    }
+    let cov = covariance(x, y)[0][1];
+    let x_std = std_dev(&x);
+    let y_std = std_dev(&y);
+    let corr = cov / (x_std * y_std);
+    vec![vec![1.0, corr], vec![corr, 1.0]]
+}
+
+/// Calculates the covariance matrix for two vectors of float values `x` and `y`.
+///
+/// # Arguments
+///
+/// * `x` - A slice of float values representing the first vector.
+/// * `y` - A slice of float values representing the second vector.
+///
+/// # Returns
+///
+/// A 2x2 fixed-size array of float values representing the covariance matrix for `x` and `y`. The first
+/// row and column of the matrix correspond to `x`, while the second row and column correspond to
+/// `y`. The element at position `(i, j)` represents the covariance between the `i`th variable
+/// (either `x` or `y`) and the `j`th variable.
+///
+/// # Examples
+///
+/// ```
+/// use numrust::covariance;
+///
+/// let x = &[1.0, 2.0, 3.0];
+/// let y = &[4.0, 8.0, 6.0];
+/// let cov = covariance(x, y);
+///
+/// // The covariance between x and x should be the variance of x
+/// assert_eq!(cov[0][0], 1.0);
+///
+/// // The covariance between x and y should be the same as the covariance between y and x
+/// assert_eq!(cov[0][1], cov[1][0]);
+///
+/// // The covariance between y and y should be the variance of y
+/// assert_eq!(cov[1][1], 4.0);
+/// ```
+///
+/// # Panics
+///
+/// Panics if `x` and `y` have different lengths.
+///
+pub fn covariance(x: &[f64], y: &[f64]) -> [[f64; 2]; 2] {
+    if x.len() != y.len() {
+        panic!("x and y must have the same length");
+    }
+    let n = x.len() as f64;
+    let x_mean = mean(x);
+    let y_mean = mean(y);
+    let mut cov = [[0.0; 2]; 2];
+    cov[0][0] = x.iter().map(|&a| (a - x_mean) * (a - x_mean)).sum::<f64>() / (n - 1.0);
+    cov[0][1] = x
+        .iter()
+        .zip(y.iter())
+        .map(|(&a, &b)| (a - x_mean) * (b - y_mean))
+        .sum::<f64>()
+        / (n - 1.0);
+    cov[1][0] = cov[0][1];
+    cov[1][1] = y.iter().map(|&b| (b - y_mean) * (b - y_mean)).sum::<f64>() / (n - 1.0);
+    cov
+}
 /// Generates a sequence of evenly spaced values within a specified range.
 ///
 /// # Arguments
@@ -141,6 +208,8 @@ pub fn variance(nums: &[f64]) -> f64 {
 mod numrust_tests {
     use std::assert_eq;
 
+    use approx::assert_abs_diff_eq;
+
     use super::*;
     #[test]
     fn test_mean_empty() {
@@ -235,5 +304,40 @@ mod numrust_tests {
 
         let seq = arange(5, 0, -1);
         assert_eq!(seq, vec![5.0, 4.0, 3.0, 2.0, 1.0]);
+    }
+
+    #[test]
+    fn test_covariance() {
+        // test case 1
+        let x = vec![1., 2., 3.];
+        let y = vec![4., 8., 6.];
+        assert_eq!(covariance(&x, &y)[0][0], 1.0);
+        assert_eq!(covariance(&x, &y)[0][1], 1.0);
+        assert_eq!(covariance(&x, &y)[1][0], 1.0);
+        assert_eq!(covariance(&x, &y)[1][1], 4.);
+
+        // test case 2
+        let x = arange(0, 10, 2);
+        let y = arange(10, 0, -2);
+        assert_eq!(covariance(&x, &y)[0][0], 10.0);
+        assert_eq!(covariance(&x, &y)[0][1], -10.0);
+        assert_eq!(covariance(&x, &y)[1][0], -10.0);
+        assert_eq!(covariance(&x, &y)[1][1], 10.0);
+
+        // test case 3
+        let x = vec![-1., -2., -3., -4., -5.];
+        let y = vec![1., 3., 3., 4., 6.];
+        assert_eq!(covariance(&x, &y)[0][0], 2.5);
+        assert_eq!(covariance(&x, &y)[0][1], -2.75);
+        assert_eq!(covariance(&x, &y)[1][0], -2.75);
+        assert_abs_diff_eq!(covariance(&x, &y)[1][1], 3.3, epsilon = 0.00001);
+    }
+
+    #[test]
+    #[should_panic(expected = "x and y must have the same length")]
+    fn test_covariance_unequal_lengths() {
+        let x = vec![1.0, 2.0, 3.0];
+        let y = vec![2.0, 4.0];
+        covariance(&x, &y);
     }
 }
