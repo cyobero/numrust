@@ -1,6 +1,33 @@
 pub mod random;
 
-pub fn corrcoef(x: &[f64], y: &[f64]) -> Vec<Vec<f64>> {
+/// Computes the Pearson correlation coefficient between two arrays of floats.
+///
+/// # Arguments
+///
+/// * `x`: A slice of floats representing the first variable.
+/// * `y`: A slice of floats representing the second variable.
+///
+/// # Returns
+///
+/// A 2x2 array of floats containing the correlation matrix, where the (0, 1) and (1, 0)
+/// entries are the correlation coefficients between `x` and `y`.
+///
+/// # Examples
+///
+/// ```
+/// use numrust::corrcoef;
+///
+/// let x = [1.0, 2.0, 3.0, 4.0, 5.0];
+/// let y = [1.0, 3.0, 2.0, 5.0, 4.0];
+/// let corr = corrcoef(&x, &y);
+/// let expected_result = [[1.0, 0.7999999999999998], [0.7999999999999998, 1.0]];
+/// assert_eq!(corr, expected_result);
+/// ```
+///
+/// # Panics
+///
+/// This function will panic if the input arrays `x` and `y` have different lengths.
+pub fn corrcoef(x: &[f64], y: &[f64]) -> [[f64; 2]; 2] {
     if x.len() != y.len() {
         panic!("x and y must have the same length");
     }
@@ -8,7 +35,7 @@ pub fn corrcoef(x: &[f64], y: &[f64]) -> Vec<Vec<f64>> {
     let x_std = std_dev(&x);
     let y_std = std_dev(&y);
     let corr = cov / (x_std * y_std);
-    vec![vec![1.0, corr], vec![corr, 1.0]]
+    [[1.0, corr], [corr, 1.0]]
 }
 
 /// Calculates the covariance matrix for two vectors of float values `x` and `y`.
@@ -339,5 +366,35 @@ mod numrust_tests {
         let x = vec![1.0, 2.0, 3.0];
         let y = vec![2.0, 4.0];
         covariance(&x, &y);
+    }
+
+    #[test]
+    fn test_corrcoef() {
+        let x = vec![1., 2., 3.];
+        let y = vec![4., 5., 6.];
+        let expected_result = [[1.0, 1.0], [1.0, 1.0]];
+        assert_eq!(corrcoef(&x, &y), expected_result);
+
+        let x = [1.0, 2.0, 3.0, 4.0, 5.0];
+        let y = [1.0, 3.0, 2.0, 5.0, 4.0];
+        let corr = corrcoef(&x, &y);
+        assert_abs_diff_eq!(corr[0][1], 0.8, epsilon = 0.000001);
+        assert_abs_diff_eq!(corr[1][0], 0.8, epsilon = 0.000001);
+    }
+
+    #[test]
+    #[should_panic(expected = "x and y must have the same length")]
+    fn test_corrcoef_panics_on_unequal_length_inputs() {
+        let x = [1.0, 2.0, 3.0, 4.0, 5.0];
+        let y = [0.5, 1.5, 2.5, 3.5];
+        corrcoef(&x, &y);
+    }
+
+    #[test]
+    fn test_corrcoef_with_zero_variance() {
+        let x = [1.0, 2.0, 3.0, 4.0, 5.0];
+        let y = [1.0, 1.0, 1.0, 1.0, 1.0];
+        assert!(corrcoef(&x, &y)[0][1].is_nan());
+        assert!(corrcoef(&x, &y)[1][0].is_nan());
     }
 }
