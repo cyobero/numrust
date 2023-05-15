@@ -56,6 +56,10 @@ pub fn arange(start: usize, stop: usize, step: isize) -> Vec<f64> {
 ///
 /// * `nums` - A slice of f64 values
 ///
+/// # Returns
+///
+/// A f64 of the computed mean of `nums`
+///
 /// # Example
 ///
 /// ```
