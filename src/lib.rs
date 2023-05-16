@@ -56,6 +56,7 @@ pub fn corrcoef(x: &[f64], y: &[f64]) -> [[f64; 2]; 2] {
 ///
 /// ```
 /// use numrust::covariance;
+/// use approx::assert_abs_diff_eq;
 ///
 /// let x = &[1.0, 2.0, 3.0];
 /// let y = &[4.0, 8.0, 6.0];
@@ -201,7 +202,7 @@ pub fn std_dev<T: Into<f64> + Copy>(nums: &[T]) -> f64 {
     }
 }
 
-/// Calculates the variance of a slice of f64 values.
+/// Calculates the sample variance of a slice of f64 values.
 ///
 /// # Arguments
 ///
@@ -227,8 +228,52 @@ pub fn variance<T: Into<f64> + Copy>(nums: &[T]) -> f64 {
     if nums.len() == 0 {
         f64::NAN
     } else {
-        nums.iter().map(|&x| (x.into() - mean).powi(2)).sum::<f64>() / (nums.len() as f64)
+        nums.iter().map(|&x| (x.into() - mean).powi(2)).sum::<f64>() / ((nums.len() - 1) as f64)
     }
+}
+/// Calculates the skewness of a slice of numeric values.
+///
+/// # Arguments
+///
+/// * `nums` - A reference to a slice of values of any type that can be converted into `f64`.
+///
+/// # Returns
+///
+/// The calculated skewness value as an `f64`.
+///
+/// # Examples
+///
+/// ```
+/// use numrust::skew;
+/// use approx::assert_abs_diff_eq;
+///
+/// let nums = vec![6, 6, 6, 9];
+/// assert_abs_diff_eq!(skew(&nums), 1.1547, epsilon = 0.001);
+///
+/// let nums = [-1.0, -0.5, 1.0, 2.5];
+/// assert_abs_diff_eq!(skew(&nums), 0.3651, epsilon = 0.001);
+///
+/// let nums = [1, 15];
+/// assert_eq!(skew(&nums), 0.0);
+///
+/// let nums = [1.0, 2.0, 3.0, 4.0, 5.0];
+/// assert_eq!(skew(&nums), 0.0);
+/// ```
+///
+/// # Panics
+///
+/// This function will panic if `nums` is an empty slice.
+pub fn skew<T: Into<f64> + Copy>(nums: &[T]) -> f64 {
+    let mean = mean(nums);
+    let variance = nums.iter().map(|&x| (x.into() - mean).powi(2)).sum::<f64>() / nums.len() as f64;
+    let std_dev = variance.sqrt();
+    let skewness = nums
+        .iter()
+        .map(|&x| (x.into() - mean) / std_dev)
+        .map(|x| x.powi(3))
+        .sum::<f64>()
+        / nums.len() as f64;
+    skewness
 }
 
 #[cfg(test)]
@@ -398,5 +443,17 @@ mod numrust_tests {
         let y = [1.0, 1.0, 1.0, 1.0, 1.0];
         assert!(corrcoef(&x, &y)[0][1].is_nan());
         assert!(corrcoef(&x, &y)[1][0].is_nan());
+    }
+
+    #[test]
+    fn test_skew() {
+        let nums = vec![6, 6, 6, 9];
+        assert_abs_diff_eq!(skew(&nums), 1.1547, epsilon = 0.001);
+
+        let nums = [-1.0, -0.5, 1.0, 2.5];
+        assert_abs_diff_eq!(skew(&nums), 0.3651, epsilon = 0.001);
+
+        let nums = [1, 15];
+        assert_eq!(skew(&nums), 0.0);
     }
 }
