@@ -1,5 +1,25 @@
 pub mod random;
 
+pub trait Moment {
+    fn mean(&self) -> f64;
+    fn var(&self) -> f64;
+    fn std(&self) -> f64;
+}
+
+impl<T: Into<f64> + Copy> Moment for [T] {
+    fn mean(&self) -> f64 {
+        mean(self)
+    }
+
+    fn var(&self) -> f64 {
+        variance(self)
+    }
+
+    fn std(&self) -> f64 {
+        std_dev(self)
+    }
+}
+
 /// Computes the Pearson correlation coefficient between two arrays of floats.
 ///
 /// # Arguments
