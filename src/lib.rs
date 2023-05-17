@@ -3,33 +3,49 @@ pub mod random;
 /// Represents a trait for computing statistical moments of an array.
 pub trait Moment {
     /// Computes the mean (average) of the array.
-    fn mean(&self) -> f64;
+    fn mean(&self) -> Option<f64>;
 
     /// Computes the variance of the array.
-    fn var(&self) -> f64;
+    fn var(&self) -> Option<f64>;
 
     /// Computes the standard deviation of the array.
-    fn std(&self) -> f64;
+    fn std(&self) -> Option<f64>;
 
     /// Computes the skewness of the array.
-    fn skew(&self) -> f64;
+    fn skew(&self) -> Option<f64>;
 }
 
 impl<T: Into<f64> + Copy> Moment for [T] {
-    fn mean(&self) -> f64 {
-        mean(self)
+    fn mean(&self) -> Option<f64> {
+        if self.len() == 0 {
+            None
+        } else {
+            Some(mean(self))
+        }
     }
 
-    fn var(&self) -> f64 {
-        variance(self)
+    fn var(&self) -> Option<f64> {
+        if self.len() == 0 {
+            None
+        } else {
+            Some(variance(self))
+        }
     }
 
-    fn std(&self) -> f64 {
-        std_dev(self)
+    fn std(&self) -> Option<f64> {
+        if self.len() == 0 {
+            None
+        } else {
+            Some(std_dev(self))
+        }
     }
 
-    fn skew(&self) -> f64 {
-        skew(self)
+    fn skew(&self) -> Option<f64> {
+        if self.len() == 0 {
+            None
+        } else {
+            Some(skew(self))
+        }
     }
 }
 
