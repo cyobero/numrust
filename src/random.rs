@@ -152,8 +152,8 @@ pub fn binomial(n: u64, p: f64, size: usize) -> Vec<u64> {
 ///
 /// This function will panic if the `Normal::new` constructor fails to create a normal distribution
 /// with the specified mean and standard deviation.
-pub fn normal(mean: f64, std: f64, n: usize) -> Vec<f64> {
-    let normal = Normal::new(mean, std).unwrap();
+pub fn normal<T: Into<f64> + Copy>(mean: T, std: T, n: usize) -> Vec<f64> {
+    let normal = Normal::new(mean.into(), std.into()).unwrap();
     let mut rng = thread_rng();
     let mut data = Vec::with_capacity(n);
 
