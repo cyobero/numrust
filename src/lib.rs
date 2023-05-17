@@ -1,9 +1,18 @@
 pub mod random;
 
+/// Represents a trait for computing statistical moments of an array.
 pub trait Moment {
+    /// Computes the mean (average) of the array.
     fn mean(&self) -> f64;
+
+    /// Computes the variance of the array.
     fn var(&self) -> f64;
+
+    /// Computes the standard deviation of the array.
     fn std(&self) -> f64;
+
+    /// Computes the skewness of the array.
+    fn skew(&self) -> f64;
 }
 
 impl<T: Into<f64> + Copy> Moment for [T] {
@@ -17,6 +26,10 @@ impl<T: Into<f64> + Copy> Moment for [T] {
 
     fn std(&self) -> f64 {
         std_dev(self)
+    }
+
+    fn skew(&self) -> f64 {
+        skew(self)
     }
 }
 
