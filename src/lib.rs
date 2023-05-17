@@ -1,8 +1,20 @@
 pub mod random;
 
+/// A trait representing the moments of a collection of values.
 pub trait Moment {
+    /// Calculates the mean of the collection.
+    ///
+    /// Returns the arithmetic mean of all the elements in the collection.
     fn mean(&self) -> f64;
+
+    /// Calculates the variance of the collection.
+    ///
+    /// Returns the variance, which measures the spread of the elements.
     fn var(&self) -> f64;
+
+    /// Calculates the standard deviation of the collection.
+    ///
+    /// Returns the standard deviation, which is the square root of the variance.
     fn std(&self) -> f64;
 }
 
