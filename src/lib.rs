@@ -3,11 +3,11 @@ use std::error::Error;
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
-pub struct ArangeError;
+pub struct ArangeError(String);
 
 impl fmt::Display for ArangeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: Step size cannot be 0.", self)
+        write!(f, "{}: Step size cannot be 0.", self.0)
     }
 }
 
@@ -190,7 +190,7 @@ pub fn covariance(x: &[f64], y: &[f64]) -> [[f64; 2]; 2] {
 /// Panics if `step` is equal to zero.
 pub fn arange(start: usize, stop: usize, step: isize) -> Result<Vec<f64>, ArangeError> {
     if step == 0 {
-        Err(ArangeError)
+        Err(ArangeError("Step size cannot be 0".to_string()))
     } else {
         let result: Vec<f64> = if step > 0 {
             (start..stop)
