@@ -1,6 +1,7 @@
 use rand::prelude::*;
 use rand::Rng;
-use rand_distr::{Binomial, Normal, WeightedIndex};
+use rand_distr::{Binomial, Normal, NormalError, WeightedIndex};
+use std::error::Error;
 
 /// Returns a vector of `size` elements randomly chosen from the array `a`.
 ///
@@ -152,8 +153,8 @@ pub fn binomial(n: u64, p: f64, size: usize) -> Vec<u64> {
 ///
 /// This function will panic if the `Normal::new` constructor fails to create a normal distribution
 /// with the specified mean and standard deviation.
-pub fn normal<T: Into<f64> + Copy>(mean: T, std: T, n: usize) -> Vec<f64> {
-    let normal = Normal::new(mean.into(), std.into()).unwrap();
+pub fn normal<T: Into<f64> + Copy>(mean: T, std: T, n: usize) -> Result<Vec<f64>, NormalError> {
+    let normal = Normal::new(mean.into(), std.into())?;
     let mut rng = thread_rng();
     let mut data = Vec::with_capacity(n);
 
@@ -162,7 +163,7 @@ pub fn normal<T: Into<f64> + Copy>(mean: T, std: T, n: usize) -> Vec<f64> {
         data.push(sample);
     }
 
-    data
+    Ok(data)
 }
 
 /// Generate a list of `n` random integers between `min` (inclusive) and `max` (exclusive).
