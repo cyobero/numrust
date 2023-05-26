@@ -4,4 +4,5 @@ Rust crate providing functions for generating random numbers and random arrays w
 # Install
 If you have [cargo]()(https://doc.rust-lang.org/cargo/getting-started/installation.html)
 installed, run:
-```cargo build`````````
+
+`cargo build`
