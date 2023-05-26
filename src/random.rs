@@ -1,7 +1,6 @@
 use rand::prelude::*;
 use rand::Rng;
-use rand_distr::{Binomial, Normal, NormalError, WeightedIndex};
-use std::error::Error;
+use rand_distr::{Binomial, BinomialError, Normal, NormalError, WeightedIndex};
 
 /// Returns a vector of `size` elements randomly chosen from the array `a`.
 ///
@@ -100,20 +99,20 @@ pub fn choice<T: Clone>(a: &[T], size: usize, replace: bool, p: Option<&[f64]>) 
 ///     let p = 0.5;
 ///     let size = 100;
 ///
-///     let data = binomial(n, p, size);
+///     let data = binomial(n, p, size).unwrap();
 ///
 ///     assert_eq!(data.len(), size);
 /// }
 /// ```
-pub fn binomial(n: u64, p: f64, size: usize) -> Vec<u64> {
+pub fn binomial(n: u64, p: f64, size: usize) -> Result<Vec<u64>, BinomialError> {
     let mut rng = thread_rng();
-    let binom = Binomial::new(n, p).unwrap();
+    let binom = Binomial::new(n, p)?;
     let mut nums = Vec::with_capacity(size);
     for _ in 0..size {
         let num = binom.sample(&mut rng);
         nums.push(num);
     }
-    nums
+    Ok(nums)
 }
 
 /// Generates a vector of `n` random samples from a normal (Gaussian) distribution
@@ -226,7 +225,7 @@ mod numrust_random_tests {
 
         let data = normal(mean, std, n);
 
-        assert_eq!(data.len(), n);
+        assert_eq!(data.unwrap().len(), n);
     }
 
     #[test]
@@ -235,7 +234,7 @@ mod numrust_random_tests {
         let std = 2.0;
         let n = 10000;
 
-        let data = normal(mean, std, n);
+        let data = normal(mean, std, n).unwrap();
 
         let actual_mean = crate::mean(&data);
         let actual_std = crate::std_dev(&data).round();
@@ -250,7 +249,7 @@ mod numrust_random_tests {
         let p = 0.5;
         let size = 100;
 
-        let data = binomial(n, p, size);
+        let data = binomial(n, p, size).unwrap();
 
         assert_eq!(data.len(), size);
     }
@@ -261,7 +260,7 @@ mod numrust_random_tests {
         let p = 0.5;
         let size = 100;
 
-        let data = binomial(n, p, size);
+        let data = binomial(n, p, size).unwrap();
 
         assert!(data.iter().all(|&x| x <= n));
         assert!(data.iter().all(|&x| x as f64 >= 0f64));
@@ -274,6 +273,7 @@ mod numrust_random_tests {
         let size = 10000;
 
         let data = binomial(n, p, size)
+            .unwrap()
             .iter()
             .map(|&x| x as f64)
             .collect::<Vec<f64>>();
