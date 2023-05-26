@@ -15,16 +15,7 @@ impl fmt::Display for NumrustError {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct ArangeError(String);
-
-impl fmt::Display for ArangeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: Step size cannot be 0.", self.0)
-    }
-}
-
-impl Error for ArangeError {}
+impl Error for NumrustError {}
 
 /// Represents a trait for computing statistical moments of an array.
 pub trait Moment {
@@ -212,9 +203,11 @@ pub fn covariance(x: &[f64], y: &[f64]) -> [[f64; 2]; 2] {
 /// # Panics
 ///
 /// Panics if `step` is equal to zero.
-pub fn arange(start: usize, stop: usize, step: isize) -> Result<Vec<f64>, ArangeError> {
+pub fn arange(start: usize, stop: usize, step: isize) -> Result<Vec<f64>, NumrustError> {
     if step == 0 {
-        Err(ArangeError("Step size cannot be 0".to_string()))
+        Err(NumrustError::CreationError(
+            "Step size cannot be 0".to_string(),
+        ))
     } else {
         let result: Vec<f64> = if step > 0 {
             (start..stop)
