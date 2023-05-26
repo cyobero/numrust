@@ -541,4 +541,13 @@ mod numrust_tests {
         let nums = [1, 15];
         assert_eq!(skew(&nums), 0.0);
     }
+
+    #[test]
+    fn test_linspace() {
+        let a = linspace(1., 100., 10);
+
+        assert_eq!(a[1], 12.);
+        assert_eq!(a[3], 34.);
+        assert_eq!(a[8], 89.);
+    }
 }
