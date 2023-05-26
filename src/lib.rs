@@ -1,4 +1,17 @@
 pub mod random;
+use std::error::Error;
+use std::fmt;
+
+#[derive(Debug, PartialEq)]
+pub struct ArangeError;
+
+impl fmt::Display for ArangeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: Step size cannot be 0.", self)
+    }
+}
+
+impl Error for ArangeError {}
 
 /// Represents a trait for computing statistical moments of an array.
 pub trait Moment {
@@ -162,36 +175,37 @@ pub fn covariance(x: &[f64], y: &[f64]) -> [[f64; 2]; 2] {
 /// ```
 /// use numrust::arange;
 ///
-/// let sequence = arange(0, 5, 1);
+/// let sequence = arange(0, 5, 1).unwrap();
 /// assert_eq!(sequence, vec![0.0, 1.0, 2.0, 3.0, 4.0]);
 ///
-/// let sequence = arange(0, 5, 2);
+/// let sequence = arange(0, 5, 2).unwrap();
 /// assert_eq!(sequence, vec![0.0, 2.0, 4.0]);
 ///
-/// let sequence = arange(5, 0, -1);
+/// let sequence = arange(5, 0, -1).unwrap();
 /// assert_eq!(sequence, vec![5.0, 4.0, 3.0, 2.0, 1.0]);
 /// ```
 ///
 /// # Panics
 ///
 /// Panics if `step` is equal to zero.
-pub fn arange(start: usize, stop: usize, step: isize) -> Vec<f64> {
+pub fn arange(start: usize, stop: usize, step: isize) -> Result<Vec<f64>, ArangeError> {
     if step == 0 {
-        panic!("Step size cannot be zero")
-    };
-    let result: Vec<f64> = if step > 0 {
-        (start..stop)
-            .step_by(step as usize)
-            .map(|x| x as f64)
-            .collect()
+        Err(ArangeError)
     } else {
-        ((stop as isize - step) as usize..=start)
-            .rev()
-            .step_by((-step) as usize)
-            .map(|x| x as f64)
-            .collect()
-    };
-    result
+        let result: Vec<f64> = if step > 0 {
+            (start..stop)
+                .step_by(step as usize)
+                .map(|x| x as f64)
+                .collect()
+        } else {
+            ((stop as isize - step) as usize..=start)
+                .rev()
+                .step_by((-step) as usize)
+                .map(|x| x as f64)
+                .collect()
+        };
+        Ok(result)
+    }
 }
 
 /// Calculates the mean value of a slice of f64 values.
@@ -393,27 +407,25 @@ mod numrust_tests {
         let step = 3;
 
         let expected_result = vec![1.0, 4.0, 7.0];
-        assert_eq!(arange(start, stop, step), expected_result);
+        assert_eq!(arange(start, stop, step).unwrap(), expected_result);
 
         let start = 5;
         let stop = 20;
         let step = 5;
 
         let expected_result = vec![5.0, 10.0, 15.0];
-        assert_eq!(arange(start, stop, step), expected_result);
+        assert_eq!(arange(start, stop, step).unwrap(), expected_result);
 
-        assert_eq!(arange(1, 6, 1), vec![1., 2., 3., 4., 5.]);
+        assert_eq!(arange(1, 6, 1).unwrap(), vec![1., 2., 3., 4., 5.]);
     }
 
     #[test]
-    #[should_panic(expected = "Step size cannot be zero")]
     fn test_arange_with_zero_step() {
         let start = 0;
         let stop = 10;
         let step = 0;
 
-        let expected_result = vec![];
-        assert_eq!(arange(start, stop, step), expected_result);
+        assert!(arange(start, stop, step).is_err());
     }
 
     #[test]
@@ -423,9 +435,9 @@ mod numrust_tests {
         let step = -2;
 
         let expected_result = vec![10.0, 8.0, 6.0, 4.0, 2.0];
-        assert_eq!(arange(start, stop, step), expected_result);
+        assert_eq!(arange(start, stop, step).unwrap(), expected_result);
 
-        let seq = arange(5, 0, -1);
+        let seq = arange(5, 0, -1).unwrap();
         assert_eq!(seq, vec![5.0, 4.0, 3.0, 2.0, 1.0]);
     }
 
@@ -440,8 +452,8 @@ mod numrust_tests {
         assert_eq!(covariance(&x, &y)[1][1], 4.);
 
         // test case 2
-        let x = arange(0, 10, 2);
-        let y = arange(10, 0, -2);
+        let x = arange(0, 10, 2).unwrap();
+        let y = arange(10, 0, -2).unwrap();
         assert_eq!(covariance(&x, &y)[0][0], 10.0);
         assert_eq!(covariance(&x, &y)[0][1], -10.0);
         assert_eq!(covariance(&x, &y)[1][0], -10.0);
