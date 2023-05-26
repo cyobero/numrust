@@ -2,6 +2,19 @@ pub mod random;
 use std::error::Error;
 use std::fmt;
 
+#[derive(Debug)]
+pub enum NumrustError {
+    CreationError(String),
+}
+
+impl fmt::Display for NumrustError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            NumrustError::CreationError(msg) => write!(f, "CreationError: {}", msg),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct ArangeError(String);
 
@@ -60,6 +73,17 @@ impl<T: Into<f64> + Copy> Moment for [T] {
             Some(skew(self))
         }
     }
+}
+
+pub fn linspace(start: f64, end: f64, num_points: usize) -> Vec<f64> {
+    let mut result = Vec::with_capacity(num_points);
+    let step = (end - start) / ((num_points - 1) as f64);
+
+    for i in 0..num_points {
+        result.push(start + (step * i as f64));
+    }
+
+    result
 }
 
 /// Computes the Pearson correlation coefficient between two arrays of floats.
