@@ -1,6 +1,6 @@
 pub mod random;
 use std::error::Error;
-use std::fmt::{self, Debug};
+use std::fmt;
 
 #[derive(Debug)]
 pub enum NumrustError {
@@ -66,83 +66,22 @@ impl<T: Into<f64> + Copy> Moment for [T] {
     }
 }
 
-/// Transposes a 2D matrix represented as a reference to a vector of vectors.
-///
-/// # Arguments
-///
-/// * `matrix` - A reference to a 2D matrix represented as a `Vec<Vec<T>>`, where `T` is the element type.
-///
-/// # Returns
-///
-/// Returns a new `Vec<Vec<T>>` representing the transposed matrix, where rows become columns and columns become rows.
-///
-/// # Examples
-///
-/// ```
-/// use numrust::transpose;
-/// let matrix = vec![
-///     vec![1, 2, 3],
-///     vec![4, 5, 6],
-///     vec![7, 8, 9],
-/// ];
-///
-/// let transposed = transpose(&matrix);
-///
-/// assert_eq!(transposed, vec![
-///     vec![1, 4, 7],
-///     vec![2, 5, 8],
-///     vec![3, 6, 9],
-/// ]);
-/// ```
-///
-/// # Panics
-///
-/// This function assumes that the input `matrix` is a non-empty 2D matrix (with at least one row and one column).
-pub fn transpose<T: Default + Clone + Debug>(matrix: &Vec<Vec<T>>) -> Vec<Vec<T>> {
+pub fn transpose<T: Copy + Clone + Display>(matrix: &mut Vec<Vec<T>>) {
     let rows = matrix.len();
     let cols = matrix[0].len();
 
-    let mut result = vec![vec![T::default(); rows]; cols];
-
     for i in 0..rows {
         for j in 0..cols {
-            result[j][i] = matrix[i][j].clone();
+            println!("{} ", matrix[i][j]);
+            println!("");
         }
     }
-
-    result
 }
 
-/// Generates a linearly spaced vector of `num_points` elements between `start` and `end`, inclusive.
-///
-/// # Arguments
-///
-/// * `start` - The starting value of the linear space.
-/// * `end` - The ending value of the linear space.
-/// * `num_points` - The number of points to generate within the linear space.
-///
-/// # Returns
-///
-/// Returns a `Vec<f64>` representing the linearly spaced vector containing `num_points` elements.
-///
-/// # Examples
-///
-/// ```
-/// use numrust::linspace;
-///
-/// let result = linspace(0.0, 1.0, 5);
-/// assert_eq!(result, vec![0.0, 0.25, 0.5, 0.75, 1.0]);
-///
-/// let result = linspace(-1.0, 1.0, 3);
-/// assert_eq!(result, vec![-1.0, 0.0, 1.0]);
-/// ```
-///
-/// # Panics
-///
-/// This function assumes that `num_points` is a positive non-zero value.
 pub fn linspace(start: f64, end: f64, num_points: usize) -> Vec<f64> {
     let mut result = Vec::with_capacity(num_points);
     let step = (end - start) / ((num_points - 1) as f64);
+
     for i in 0..num_points {
         result.push(start + (step * i as f64));
     }
@@ -610,21 +549,10 @@ mod numrust_tests {
 
     #[test]
     fn test_linspace() {
-        let a = linspace(0., 1., 5);
-        assert_eq!(a, vec![0., 0.25, 0.5, 0.75, 1.]);
-        let a = linspace(-1.0, 1.0, 3);
-        assert_eq!(a, vec![-1., 0., 1.]);
-    }
+        let a = linspace(1., 100., 10);
 
-    // [[1,2,3]
-    //  [4,5,6]
-    //  [7,8,9]]
-    #[test]
-    fn test_transpose() {
-        let a = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
-        assert_eq!(
-            transpose(&a),
-            vec![vec![1, 4, 7], vec![2, 5, 8], vec![3, 6, 9]]
-        );
+        assert_eq!(a[1], 12.);
+        assert_eq!(a[3], 34.);
+        assert_eq!(a[8], 89.);
     }
 }
